@@ -72,15 +72,15 @@ type BlockQuoteNode = Node<typeof NodeType.BlockQuote, {
 }>;
 
 type OrderedListNode = Node<typeof NodeType.OrderedListItem, {
-  data: string;
+  data: InlineTextNode[];
 }>;
 
 type UnorderedListNode = Node<typeof NodeType.UnorderedListItem, {
-  data: string;
+  data: InlineTextNode[];
 }>;
 
 type CodeBlockNode = Node<typeof NodeType.CodeBlock, {
-  data: string;
+  data: InlineTextNode[];
 }>;
 
 type MarkdownNode =
