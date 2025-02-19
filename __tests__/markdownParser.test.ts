@@ -19,7 +19,22 @@ Deno.test(function testExtractBetween() {
   );
   assertEquals(extractBetween("![some [text]!]", ["[", "]"]), "some [text]!");
   assertEquals(extractBetween("!|some |text|!|", "|"), "some |text|!");
+  assertEquals(
+    extractBetween("!|some |text|! wow!|", "|"),
+    "some |text|! wow!",
+  );
   assertEquals(extractBetween("!|some text!|", "|"), "some text!");
+  assertEquals(extractBetween("!|some text!| wow!", "|"), "some text!");
+  assertEquals(extractBetween("some `code` text", "`"), "code");
+  assertEquals(extractBetween("some *italic* text", "*"), "italic");
+  assertEquals(
+    extractBetween("some **bold** text", "**"),
+    "bold",
+  );
+  assertEquals(
+    extractBetween("some ***bold italic*** text", "***"),
+    "bold italic",
+  );
 });
 
 Deno.test(function parseLineTest() {
