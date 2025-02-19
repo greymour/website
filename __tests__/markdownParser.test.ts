@@ -1,6 +1,12 @@
 import { assertEquals } from "@std/assert";
-import { NodeType } from "../src/main.ts";
-import { extractBetween, parseImageNode } from "../src/markdownParser.ts";
+import {
+  extractBetween,
+  NodeType,
+  parseImageNode,
+  parseInlineTextNode,
+  parseLine,
+  TextNodeAttributes,
+} from "../src/markdownParser.ts";
 
 Deno.test(function testExtractBetween() {
   assertEquals(extractBetween("![some text!]", ["[", "]"]), "some text!");
@@ -14,6 +20,35 @@ Deno.test(function testExtractBetween() {
   assertEquals(extractBetween("![some [text]!]", ["[", "]"]), "some [text]!");
   assertEquals(extractBetween("!|some |text|!|", "|"), "some |text|!");
   assertEquals(extractBetween("!|some text!|", "|"), "some text!");
+});
+
+Deno.test(function parseLineTest() {
+  assertEquals(parseLine("this is some text!"), {
+    type: NodeType.Paragraph,
+    data: [{ attributes: null, data: "this is some text!" }],
+  });
+});
+
+Deno.test(function parseInlineTextNodeTest() {
+  assertEquals(
+    parseInlineTextNode(
+      "some normal text, some *italic* text, some **bold** text, some `code` text, and some ***bold italic*** text.",
+    ),
+    [
+      {
+        attributes: null,
+        data: "some normal text, some ",
+      },
+      {
+        attributes: TextNodeAttributes.Italic,
+        data: "italic",
+      },
+      {
+        attributes: null,
+        data: "text, some ",
+      },
+    ],
+  );
 });
 
 Deno.test(function testParseImageNode() {
