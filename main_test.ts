@@ -4,7 +4,7 @@ import {
   parseInlineTextNode,
   parseLine,
   TextNodeAttributes,
-} from "./main.ts";
+} from "./src/main.ts";
 
 const test = Deno.test;
 

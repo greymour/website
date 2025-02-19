@@ -1,12 +1,12 @@
+import type { Option } from "./utils/types.ts";
+
 async function main() {
-  const file = await Deno.readTextFile("./test.md");
-  const nodes = file.split("\n").map((line) => parseLine(line));
-  console.log("main nodes: ", nodes);
+  // const file = await Deno.readTextFile("./test.md");
+  // const nodes = file.split("\n").map((line) => parseLine(line));
+  // console.log("main nodes: ", nodes);
 }
 
 main();
-
-type Option<T> = T | null;
 
 export const NodeType = {
   HeadingOne: "HeadingOne",
@@ -38,12 +38,12 @@ export const TextNodeAttributes = {
   BoldItalic: "BoldItalic",
 } as const;
 
-type InlineTextNode = {
-  attributes: Enum<typeof TextNodeAttributes> | null;
+export type InlineTextNode = {
+  attributes: Option<Enum<typeof TextNodeAttributes>>;
   data: string;
 };
 
-type BlockTextNode = Node<
+export type BlockTextNode = Node<
   Enum<
     Pick<
       typeof NodeType,
@@ -59,31 +59,31 @@ type BlockTextNode = Node<
   { data: InlineTextNode[] }
 >;
 
-type HorizontalRuleNode = Node<typeof NodeType.HorizontalRule>;
+export type HorizontalRuleNode = Node<typeof NodeType.HorizontalRule>;
 
-type ImageNode = Node<typeof NodeType.Image, {
+export type ImageNode = Node<typeof NodeType.Image, {
   href: string;
   displayText?: string;
   title?: string;
 }>;
 
-type BlockQuoteNode = Node<typeof NodeType.BlockQuote, {
+export type BlockQuoteNode = Node<typeof NodeType.BlockQuote, {
   data: InlineTextNode[];
 }>;
 
-type OrderedListNode = Node<typeof NodeType.OrderedListItem, {
+export type OrderedListNode = Node<typeof NodeType.OrderedListItem, {
   data: InlineTextNode[];
 }>;
 
-type UnorderedListNode = Node<typeof NodeType.UnorderedListItem, {
+export type UnorderedListNode = Node<typeof NodeType.UnorderedListItem, {
   data: InlineTextNode[];
 }>;
 
-type CodeBlockNode = Node<typeof NodeType.CodeBlock, {
+export type CodeBlockNode = Node<typeof NodeType.CodeBlock, {
   data: InlineTextNode[];
 }>;
 
-type MarkdownNode =
+export type MarkdownNode =
   | BlockTextNode
   | HorizontalRuleNode
   | ImageNode
@@ -94,6 +94,13 @@ type MarkdownNode =
 
 export function parseInlineTextNode(text: string): InlineTextNode[] {
   return [];
+}
+
+export function parseImageNode(text: string): ImageNode {
+  return {
+    type: NodeType.Image,
+    href: "",
+  };
 }
 
 export function parseLine(line: string): Option<MarkdownNode> {
@@ -130,21 +137,19 @@ export function parseLine(line: string): Option<MarkdownNode> {
       };
     case line.startsWith("```"):
       throw new Error("Not yet implemented");
-      return {
-        type: NodeType.CodeBlock,
-        data: "",
-      };
+      // return {
+      //   type: NodeType.CodeBlock,
+      //   data: "",
+      // };
     case line.startsWith("- "):
-      throw new Error("Not yet implemented");
       return {
         type: NodeType.UnorderedListItem,
-        data: line.slice(2),
+        data: parseInlineTextNode(line.slice(2)),
       };
     case typeof line.match(/^[0-9]\. .*$/)?.[0] !== "undefined":
-      throw new Error("Not yet implemented");
       return {
         type: NodeType.OrderedListItem,
-        data: line.slice(3),
+        data: parseInlineTextNode(line.slice(3)),
       };
     case line.startsWith("==="):
     case line.startsWith("***"):
@@ -153,15 +158,8 @@ export function parseLine(line: string): Option<MarkdownNode> {
         type: NodeType.HorizontalRule,
       };
     case line.startsWith("!["):
-      throw new Error("Not yet implemented");
-      return {
-        type: NodeType.Image,
-        href: "",
-        title: "",
-        displayText: "",
-      };
+      return parseImageNode(line);
     case line.startsWith("> "):
-      throw new Error("Not yet implemented");
       return {
         type: NodeType.BlockQuote,
         data: parseInlineTextNode(line.slice(2)),
