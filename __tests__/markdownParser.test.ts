@@ -44,6 +44,82 @@ Deno.test(function parseLineTest() {
   });
 });
 
+Deno.test(function parseInlineTextNodeItalic() {
+  assertEquals(parseInlineTextNode("some normal text, some *italic* text."), [
+    {
+      attributes: null,
+      data: "some normal text, some ",
+    },
+    {
+      attributes: TextNodeAttributes.Italic,
+      data: "italic",
+    },
+    {
+      attributes: null,
+      data: " text.",
+    },
+  ]);
+});
+
+Deno.test(function parseInlineTextNodeBold() {
+  assertEquals(parseInlineTextNode("some normal text, some **bold** text."), [
+    {
+      attributes: null,
+      data: "some normal text, some ",
+    },
+    {
+      attributes: TextNodeAttributes.Bold,
+      data: "bold",
+    },
+    {
+      attributes: null,
+      data: " text.",
+    },
+  ]);
+});
+
+Deno.test(function parseInlineTextNodeBoldItalic() {
+  assertEquals(
+    parseInlineTextNode("some normal text, some ***bold italic*** text."),
+    [
+      {
+        attributes: null,
+        data: "some normal text, some ",
+      },
+      {
+        attributes: TextNodeAttributes.BoldItalic,
+        data: "bold italic",
+      },
+      {
+        attributes: null,
+        data: " text.",
+      },
+    ],
+  );
+});
+
+Deno.test(function parseInlineTextNodeCode() {
+  assertEquals(
+    parseInlineTextNode(
+      "here's some code: `const sayHello = (name: string) => `Hello ${name}!`;`. Isn't that cool?",
+    ),
+    [
+      {
+        attributes: null,
+        data: "here's some code: ",
+      },
+      {
+        attributes: TextNodeAttributes.Code,
+        data: "const sayHello = (name: string) => `Hello ${name}!`;",
+      },
+      {
+        attributes: null,
+        data: ". Isn't that cool?",
+      },
+    ],
+  );
+});
+
 Deno.test(function parseInlineTextNodeTest() {
   assertEquals(
     parseInlineTextNode(
@@ -60,7 +136,31 @@ Deno.test(function parseInlineTextNodeTest() {
       },
       {
         attributes: null,
-        data: "text, some ",
+        data: " text, some ",
+      },
+      {
+        attributes: TextNodeAttributes.Bold,
+        data: "bold",
+      },
+      {
+        attributes: null,
+        data: " text, some ",
+      },
+      {
+        attributes: TextNodeAttributes.Code,
+        data: "code",
+      },
+      {
+        attributes: null,
+        data: " text, and some ",
+      },
+      {
+        attributes: TextNodeAttributes.BoldItalic,
+        data: "bold italic",
+      },
+      {
+        attributes: null,
+        data: " text.",
       },
     ],
   );

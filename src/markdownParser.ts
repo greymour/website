@@ -116,8 +116,69 @@ export type MarkdownNode =
   | UnorderedListNode
   | CodeBlockNode;
 
+// @TODO: refactor this, this is so gross and hard to read
 export function parseInlineTextNode(text: string): InlineTextNode[] {
-  return [];
+  const nodes: InlineTextNode[] = [];
+  let i = 0;
+  let data = "";
+  while (i < text.length) {
+    const char = text[i];
+    const next = text[i + 1];
+    const nextNext = text[i + 2];
+    let delimiter = null;
+    if (char === "*" && next === "*" && nextNext === "*") {
+      delimiter = "***";
+    } else if (char === "*" && next === "*") {
+      delimiter = "**";
+    } else if (char === "*") {
+      delimiter = "*";
+      // this doesn't handle code with backticks inside of it, eg. `const sayHello = (name: string) => `Hello ${name}!`;`
+    } else if (char === "`") {
+      delimiter = "`";
+    }
+    if (delimiter) {
+      nodes.push({
+        attributes: null,
+        data,
+      });
+      let attributes = delimiter === "***"
+        ? TextNodeAttributes.BoldItalic
+        : delimiter == "**"
+        ? TextNodeAttributes.Bold
+        : delimiter === "*"
+        ? TextNodeAttributes.Italic
+        : delimiter === "`"
+        ? TextNodeAttributes.Code
+        : null;
+
+      data = "";
+      for (let k = i + delimiter.length; k < text.length; k++) {
+        if (text.slice(k, k + delimiter.length) === delimiter) {
+          break;
+        }
+        data += text[k];
+      }
+
+      nodes.push({
+        attributes,
+        data,
+      });
+      i += data.length;
+      i += delimiter.length * 2;
+      attributes = null;
+      data = "";
+    } else {
+      data += char;
+      i++;
+    }
+  }
+  if (data) {
+    nodes.push({
+      attributes: null,
+      data,
+    });
+  }
+  return nodes;
 }
 
 export function parseLine(line: string): Option<MarkdownNode> {
