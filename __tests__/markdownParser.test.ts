@@ -3,6 +3,7 @@ import {
   extractBetween,
   NodeType,
   parseImageNode,
+  parseInlineCodeNode,
   parseInlineTextNode,
   parseLine,
   TextNodeAttributes,
@@ -98,6 +99,22 @@ Deno.test(function parseInlineTextNodeBoldItalic() {
   );
 });
 
+Deno.test(function parseInlineCodeNodeTest() {
+  assertEquals(
+    parseInlineCodeNode(
+      "`const sayHello = (name: string) => `Hello ${name}!`;`",
+    ),
+    "const sayHello = (name: string) => `Hello ${name}!`;",
+  );
+
+  assertEquals(
+    parseInlineCodeNode(
+      "``some code``",
+    ),
+    "`some code`",
+  );
+});
+
 Deno.test(function parseInlineTextNodeCode() {
   assertEquals(
     parseInlineTextNode(
@@ -120,7 +137,7 @@ Deno.test(function parseInlineTextNodeCode() {
   );
 });
 
-Deno.test(function parseInlineTextNodeTest() {
+Deno.test(function parseInlineTextNodeAll() {
   assertEquals(
     parseInlineTextNode(
       "some normal text, some *italic* text, some **bold** text, some `code` text, and some ***bold italic*** text.",

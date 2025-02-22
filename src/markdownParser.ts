@@ -116,6 +116,44 @@ export type MarkdownNode =
   | UnorderedListNode
   | CodeBlockNode;
 
+export function parseInlineCodeNode(text: string): string {
+  let openCount = 0;
+  let closeCount = 0;
+  let left = 0;
+  let right = text.length - 1;
+  while ((openCount < 1 || closeCount < 1) && left < right) {
+    if (text[left] === "`") {
+      openCount++;
+    } else {
+      left++;
+    }
+    if (text[right] === "`") {
+      closeCount++;
+    } else {
+      right--;
+    }
+  }
+  // the +1 here is to strip the backtick delimiter out
+  return text.slice(left + 1, right);
+}
+
+function getDelimiter(text: string, i: number): Option<string> {
+  const char = text[i];
+  const next = text[i + 1];
+  const nextNext = text[i + 2];
+  let delimiter = null;
+  if (char === "*" && next === "*" && nextNext === "*") {
+    delimiter = "***";
+  } else if (char === "*" && next === "*") {
+    delimiter = "**";
+  } else if (char === "*") {
+    delimiter = "*";
+  } else if (char === "`") {
+    delimiter = "`";
+  }
+  return delimiter;
+}
+
 // @TODO: refactor this, this is so gross and hard to read
 export function parseInlineTextNode(text: string): InlineTextNode[] {
   const nodes: InlineTextNode[] = [];
@@ -123,19 +161,7 @@ export function parseInlineTextNode(text: string): InlineTextNode[] {
   let data = "";
   while (i < text.length) {
     const char = text[i];
-    const next = text[i + 1];
-    const nextNext = text[i + 2];
-    let delimiter = null;
-    if (char === "*" && next === "*" && nextNext === "*") {
-      delimiter = "***";
-    } else if (char === "*" && next === "*") {
-      delimiter = "**";
-    } else if (char === "*") {
-      delimiter = "*";
-      // this doesn't handle code with backticks inside of it, eg. `const sayHello = (name: string) => `Hello ${name}!`;`
-    } else if (char === "`") {
-      delimiter = "`";
-    }
+    const delimiter = getDelimiter(text, i);
     if (delimiter) {
       nodes.push({
         attributes: null,
@@ -152,11 +178,15 @@ export function parseInlineTextNode(text: string): InlineTextNode[] {
         : null;
 
       data = "";
-      for (let k = i + delimiter.length; k < text.length; k++) {
-        if (text.slice(k, k + delimiter.length) === delimiter) {
-          break;
+      if (attributes === TextNodeAttributes.Code) {
+        data = parseInlineCodeNode(text.slice(i));
+      } else {
+        for (let k = i + delimiter.length; k < text.length; k++) {
+          if (text.slice(k, k + delimiter.length) === delimiter) {
+            break;
+          }
+          data += text[k];
         }
-        data += text[k];
       }
 
       nodes.push({
