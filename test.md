@@ -18,5 +18,9 @@ This is a paragraph! And *this text is italic* and **this text is bold**. And no
 
 Code block starts after this:
 ```typescript
-const foo = 'bar';
+export default async function handler(req, res) {
+    res.status = 200;
+    res.body = JSON.stringify({ data: "Hello world!" });
+    return res;
+}
 ```

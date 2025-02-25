@@ -1,7 +1,10 @@
 import { assertEquals } from "@std/assert";
 import {
+  containsCodeBlock,
   extractBetween,
   NodeType,
+  parseCodeBlock,
+  parseDoc,
   parseImageNode,
   parseInlineCodeNode,
   parseInlineTextNode,
@@ -207,4 +210,41 @@ Deno.test(function testParseImageNode() {
       title: undefined,
     },
   );
+});
+
+Deno.test(function testContainsCodeBlock() {
+  assertEquals(containsCodeBlock("some code ``` wow"), false);
+  assertEquals(
+    containsCodeBlock(
+      "some code wow\n```typescript\nconst foo: string = `this is some ${var}`;```\nthat was certainly a code block",
+    ),
+    true,
+  );
+});
+
+Deno.test(function testParseCodeBlock() {
+  const testStr = "```typescript\n\
+export default async function handler(req, res) {\n\
+  res.status = 200;\n\
+  return res;\n\
+}```";
+  const expected = {
+    type: NodeType.CodeBlock,
+    language: "typescript",
+    data: [
+      {
+        attributes: null,
+        data:
+          "export default async function handler(req, res) {\n  res.status = 200;\n  return res;\n}",
+      },
+    ],
+  };
+  assertEquals(parseCodeBlock(testStr), expected);
+});
+
+Deno.test(function testParseDoc() {
+  const fileStr = Deno.readTextFileSync("./test.md");
+  const nodes = parseDoc(fileStr);
+  console.log("testParseDoc nodes: ", nodes);
+  assertEquals(nodes, []);
 });

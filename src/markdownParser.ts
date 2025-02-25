@@ -104,6 +104,7 @@ export type UnorderedListNode = Node<typeof NodeType.UnorderedListItem, {
 }>;
 
 export type CodeBlockNode = Node<typeof NodeType.CodeBlock, {
+  language: Option<string>;
   data: InlineTextNode[];
 }>;
 
@@ -244,6 +245,7 @@ export function parseLine(line: string): Option<MarkdownNode> {
         data: parseInlineTextNode(line.slice(7)),
       };
     case line.startsWith("```"):
+      console.log("line: ", line);
       throw new Error("Not yet implemented");
       // return {
       //   type: NodeType.CodeBlock,
@@ -277,5 +279,87 @@ export function parseLine(line: string): Option<MarkdownNode> {
         type: NodeType.Paragraph,
         data: parseInlineTextNode(line),
       };
+  }
+}
+
+export function containsCodeBlock(doc: string): boolean {
+  const openIdx = doc.indexOf("```");
+  const closeIdx = doc.lastIndexOf("```");
+  return openIdx !== closeIdx && openIdx > -1 && closeIdx > -1;
+}
+
+export function parseCodeBlock(text: string): CodeBlockNode {
+  const nodes: string[] = [];
+  const lines = text.split("\n");
+  let delimCount = 0;
+  let language = null;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.startsWith("```") && delimCount < 1) {
+      language = line.slice(3);
+      delimCount++;
+    } else if (line === "```") {
+      delimCount++;
+    } else if (line.endsWith("```")) {
+      const endIdx = line.indexOf("```");
+      nodes.push(line.slice(0, endIdx));
+    } else if (delimCount === 2) {
+      break;
+    } else {
+      nodes.push(line);
+    }
+  }
+
+  return {
+    type: NodeType.CodeBlock,
+    language,
+    data: [{
+      attributes: null,
+      data: nodes.join("\n"),
+    }],
+  };
+}
+
+// @TODO: this is mostly working? I need to write a test for this...
+export function parseDoc(
+  doc: string,
+  existingNodes: MarkdownNode[] = [],
+): MarkdownNode[] {
+  if (containsCodeBlock(doc)) {
+    const delimIdx = doc.indexOf("```");
+    console.log("parseDoc delimIdx: ", delimIdx);
+    const preContent = doc.slice(0, delimIdx);
+    console.log("parseDoc preContent: ", preContent);
+    const midContent = doc.slice(delimIdx);
+    existingNodes.push(
+      ...preContent
+        .split("\n")
+        .map((line) => parseLine(line))
+        .filter((node) => !!node),
+    );
+    const codeBlock = parseCodeBlock(midContent);
+    existingNodes.push(codeBlock);
+    const postContent = doc.slice(
+      delimIdx + codeBlock.data[0].data.length + 6 +
+        (codeBlock.language?.length || 0),
+    );
+    console.log("parseDoc postContent: ", postContent);
+    // console.log("need to handle a code block, think about it!");
+    // @TODO:
+    // - we know it contains a code block, so split the doc on '```' <- don't do this, we won't know which array element is the actual code block one
+    // - find the index of '```' and take a slice before and after that
+    // - the before slice gets passed to `parseLine`, everything else gets passed to `parseCodeBlock`
+    // - `parseCodeBlock` should iterate until it finds a '```'
+    // - if it doesn't find the closing delimiter, throw an error
+    // - once the closing delimiter is found, return the node
+    // - take another slice, and pass that to `parseDoc` so that this happens recursively until there are no further code blocks to parse
+    return parseDoc(postContent, existingNodes);
+  } else {
+    return existingNodes.concat(
+      doc
+        .split("\n")
+        .map((line) => parseLine(line))
+        .filter((node) => !!node),
+    );
   }
 }
